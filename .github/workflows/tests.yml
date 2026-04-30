@@ -1,0 +1,58 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_call:
+
+jobs:
+  test:
+    name: Convert test_files (no-excel)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run converter on test_files
+        run: python convert_excel.py test_files --no-excel --recursive
+
+      - name: Validate output files
+        run: |
+          python - <<'EOF'
+          import sys
+          from pathlib import Path
+          import openpyxl
+
+          converted = sorted(Path("test_files/converted").rglob("*.xlsx"))
+          if not converted:
+              print("ERROR: no .xlsx files were produced")
+              sys.exit(1)
+
+          print(f"Validating {len(converted)} file(s):")
+          failures = []
+          for f in converted:
+              try:
+                  wb = openpyxl.load_workbook(f)
+                  sheets = wb.sheetnames
+                  total_rows = sum(ws.max_row or 0 for ws in wb.worksheets)
+                  print(f"  OK   {f.relative_to('test_files/converted')} "
+                        f"({len(sheets)} sheet(s), {total_rows} row(s))")
+              except Exception as exc:
+                  print(f"  FAIL {f.relative_to('test_files/converted')}: {exc}")
+                  failures.append(f)
+
+          if failures:
+              print(f"\n{len(failures)} file(s) failed validation.")
+              sys.exit(1)
+
+          print(f"\nAll {len(converted)} file(s) passed.")
+          EOF
