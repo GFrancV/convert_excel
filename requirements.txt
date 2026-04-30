@@ -1,0 +1,7 @@
+# Core dependencies (required)
+xlrd>=2.0.1
+openpyxl>=3.1.0
+
+# Windows COM automation (recommended — enables full format-preserving conversion)
+# Requires Microsoft Excel to be installed on the machine.
+pywin32>=306; sys_platform == "win32"
