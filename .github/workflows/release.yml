@@ -10,7 +10,7 @@ jobs:
 
   package:
     name: Build and upload release artifact
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: test
     permissions:
       contents: write
@@ -23,15 +23,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install package and build dependencies
+        run: pip install ".[dev]"
 
-      - name: Build ZIP package
-        run: python package.py
+      - name: Build .exe and ZIP
+        run: python scripts/package.py
 
       - name: Upload ZIP to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          zip_file=$(ls dist/excel-converter-v*.zip)
+          zip_file=$(ls dist/excel-converter-v*-win64.zip)
           gh release upload "${{ github.event.release.tag_name }}" "$zip_file" --clobber

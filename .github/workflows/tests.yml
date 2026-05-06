@@ -19,11 +19,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install package
+        run: pip install .
 
       - name: Run converter on test_files
-        run: python convert_excel.py test_files --no-excel --recursive
+        run: excel-converter test_files --no-excel --recursive
 
       - name: Validate output files
         run: |
