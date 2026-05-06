@@ -34,7 +34,8 @@ dev = [
 ]
 
 [project.scripts]
-excel-converter = "excel_converter.cli:main"
+excel-converter     = "excel_converter.cli:main"
+excel-converter-gui = "excel_converter.gui:main"
 
 [project.urls]
 Repository = "https://github.com/GFrancV/excel-converter"

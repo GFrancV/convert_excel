@@ -19,6 +19,72 @@ from excel_converter.discovery import build_tasks, find_files
 from excel_converter.fallback import _convert_data_only
 
 
+def run_conversion(tasks, no_excel=False, workers=None):
+    """Generator that executes conversion tasks and yields a progress dict per file.
+
+    First yield — mode info (src is None):
+        {"src": None, "success": None, "error": "", "fmt": "",
+         "done": 0, "total": int, "mode": "com"|"fallback", "com_unavailable": bool}
+
+    Subsequent yields — per-file result:
+        {"src": Path, "success": bool, "error": str, "fmt": str,
+         "done": int, "total": int, "mode": str, "com_unavailable": bool}
+
+    Generator return value (StopIteration.value):
+        {"ok": int, "failed": int, "failed_files": [(Path, str)]}
+    """
+    if workers is None:
+        workers = os.cpu_count() or 4
+
+    total = len(tasks)
+    ok_count = 0
+    failed = []
+    excel = None if no_excel else _start_excel()
+    com_unavailable = not no_excel and excel is None
+    mode = "com" if excel is not None else "fallback"
+
+    yield {
+        "src": None, "success": None, "error": "", "fmt": "",
+        "done": 0, "total": total, "mode": mode, "com_unavailable": com_unavailable,
+    }
+
+    try:
+        if excel is not None:
+            for done, (src, dst) in enumerate(tasks, start=1):
+                try:
+                    _convert_with_excel(excel, src, dst)
+                    ok_count += 1
+                    yield {"src": src, "success": True, "error": "", "fmt": "COM",
+                           "done": done, "total": total, "mode": mode, "com_unavailable": False}
+                except Exception as exc:
+                    failed.append((src, str(exc)))
+                    yield {"src": src, "success": False, "error": str(exc), "fmt": "",
+                           "done": done, "total": total, "mode": mode, "com_unavailable": False}
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {
+                    executor.submit(_convert_data_only, src, dst): src
+                    for src, dst in tasks
+                }
+                done = 0
+                for future in as_completed(futures):
+                    src, success, error, fmt = future.result()
+                    done += 1
+                    if success:
+                        ok_count += 1
+                        yield {"src": src, "success": True, "error": "", "fmt": fmt,
+                               "done": done, "total": total, "mode": mode, "com_unavailable": False}
+                    else:
+                        failed.append((src, error))
+                        yield {"src": src, "success": False, "error": error, "fmt": "",
+                               "done": done, "total": total, "mode": mode, "com_unavailable": False}
+    finally:
+        if excel is not None:
+            _stop_excel(excel)
+
+    return {"ok": ok_count, "failed": len(failed), "failed_files": failed}
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=f"Excel Legacy Converter v{__version__} by {__author__} — "
@@ -81,45 +147,22 @@ def main():
     ok_count = 0
     failed = []
 
-    # ── COM mode (primary) ────────────────────────────────────────────────────
-    excel = None if args.no_excel else _start_excel()
+    gen = run_conversion(tasks, no_excel=args.no_excel, workers=args.workers)
+    start = next(gen)  # mode info event
+    if start["com_unavailable"]:
+        print("Note: Excel COM unavailable — using data-only fallback converter.")
+    mode_label = "[Excel COM — full formatting]" if start["mode"] == "com" else "[data only — no formatting]"
+    print(f"Found {len(files)} file(s) to convert...  {mode_label}")
+    print(f"Output: {output_dir}\n")
 
-    if excel is not None:
-        print(f"Found {len(files)} file(s) to convert...  [Excel COM — full formatting]")
-        print(f"Output: {output_dir}\n")
-        try:
-            for src, dst in tasks:
-                try:
-                    _convert_with_excel(excel, src, dst)
-                    ok_count += 1
-                    print(f"  [OK]   {src.name}")
-                except Exception as exc:
-                    failed.append((src, str(exc)))
-                    print(f"  [FAIL] {src.name}: {exc}")
-        finally:
-            _stop_excel(excel)
-
-    # ── Fallback mode ─────────────────────────────────────────────────────────
-    else:
-        if not args.no_excel:
-            print("Note: Excel COM unavailable — using data-only fallback converter.")
-        print(f"Found {len(files)} file(s) to convert...  [data only — no formatting]")
-        print(f"Output: {output_dir}\n")
-
-        with ThreadPoolExecutor(max_workers=args.workers) as executor:
-            futures = {
-                executor.submit(_convert_data_only, src, dst): src
-                for src, dst in tasks
-            }
-            for future in as_completed(futures):
-                src, success, error, fmt = future.result()
-                if success:
-                    ok_count += 1
-                    tag = f"  [{fmt.upper()}]" if fmt in ("html", "xml") else ""
-                    print(f"  [OK]   {src.name}{tag}")
-                else:
-                    failed.append((src, error))
-                    print(f"  [FAIL] {src.name}: {error}")
+    for p in gen:
+        if p["success"]:
+            ok_count += 1
+            tag = f"  [{p['fmt'].upper()}]" if p["fmt"] in ("html", "xml") else ""
+            print(f"  [OK]   {p['src'].name}{tag}")
+        else:
+            failed.append((p["src"], p["error"]))
+            print(f"  [FAIL] {p['src'].name}: {p['error']}")
 
     print(f"\nDone: {ok_count} converted, {len(failed)} failed.")
     if failed:
