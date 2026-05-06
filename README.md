@@ -1,6 +1,6 @@
 # Excel Legacy Converter
 
-**Version:** 0.2.0 | **Author:** GFrancV
+**Version:** 0.3.0 | **Author:** GFrancV
 
 Converts legacy Excel files (`.xls`, Excel 97-2003 format) to modern `.xlsx` format.
 

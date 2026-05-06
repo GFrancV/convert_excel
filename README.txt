@@ -1,5 +1,5 @@
 ================================================================================
-  EXCEL LEGACY CONVERTER                                 v0.2.0 by GFrancV
+  EXCEL LEGACY CONVERTER                                 v0.3.0 by GFrancV
 ================================================================================
 
   Converts legacy Excel files (.xls, Excel 97-2003) to modern .xlsx format.

@@ -119,3 +119,4 @@ python scripts/package.py
 | 0.1.1 | Added SpreadsheetML (XML) and HTML sub-format detection and parsing |
 | 0.2.0 | Added Excel COM mode as primary path for full format preservation |
 | 0.2.1 | Migrated to src layout — split into focused modules under src/excel_converter/ |
+| 0.3.0 | Added tkinter GUI (`gui.py`); extracted `run_conversion()` generator from `cli.py`; GUI exe built with `excel_converter_gui.spec` (no console window) |
