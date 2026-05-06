@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build the distributable .exe ZIP for excel-converter.
 
-Runs PyInstaller with excel_converter.spec (--onefile mode), then
-packages the resulting executable into a ZIP for distribution.
+Runs PyInstaller for both the CLI and GUI executables, then packages
+them into a single ZIP for distribution.
 
 Output: dist/excel-converter-v<version>-win64.zip
-Contents: excel-converter.exe, README.md, README.txt
+Contents: excel-converter.exe, excel-converter-gui.exe, README.md, README.txt
 
 Run from the project root:
   python scripts/package.py
@@ -19,6 +19,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent  # project root
 
+SPECS = [
+    ("excel_converter.spec",     "excel-converter.exe"),
+    ("excel_converter_gui.spec", "excel-converter-gui.exe"),
+]
+
 
 def get_version() -> str:
     src = (ROOT / "src" / "excel_converter" / "__init__.py").read_text(encoding="utf-8")
@@ -28,13 +33,13 @@ def get_version() -> str:
     return m.group(1)
 
 
-def build_exe() -> Path:
+def build_exe(spec: str, expected_name: str) -> Path:
     subprocess.run(
-        [sys.executable, "-m", "PyInstaller", "excel_converter.spec", "--clean", "--noconfirm"],
+        [sys.executable, "-m", "PyInstaller", spec, "--clean", "--noconfirm"],
         check=True,
         cwd=ROOT,
     )
-    exe = ROOT / "dist" / "excel-converter.exe"
+    exe = ROOT / "dist" / expected_name
     if not exe.exists():
         sys.exit(f"Error: expected PyInstaller output at {exe}")
     return exe
@@ -42,15 +47,20 @@ def build_exe() -> Path:
 
 def main():
     version = get_version()
-    print(f"Building excel-converter v{version}...")
+    print(f"Building excel-converter v{version}...\n")
 
-    exe = build_exe()
+    exes: list[Path] = []
+    for spec, name in SPECS:
+        print(f"--- Building {name} ---")
+        exes.append(build_exe(spec, name))
+        print()
 
     zip_name = f"excel-converter-v{version}-win64.zip"
     zip_path = ROOT / "dist" / zip_name
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.write(exe, arcname="excel-converter.exe")
-        print(f"  added  excel-converter.exe  ({exe.stat().st_size // 1024:,} KB)")
+        for exe in exes:
+            zf.write(exe, arcname=exe.name)
+            print(f"  added  {exe.name}  ({exe.stat().st_size // 1024:,} KB)")
         for doc in ("README.md", "README.txt"):
             zf.write(ROOT / doc, arcname=doc)
             print(f"  added  {doc}")
