@@ -26,16 +26,36 @@ The COM mode is equivalent to opening each file in Excel and using **File → Sa
 - `pywin32 >= 306` — Windows only
 - Microsoft Excel installed on the machine
 
+---
+
+## Setup
+
+### End users — install from source
+
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/GFrancV/excel-converter.git
+cd excel-converter
+pip install .
 ```
+
+After installation the `excel-converter` command is available globally in your environment.
+
+### Developers — editable install
+
+```bash
+git clone https://github.com/GFrancV/excel-converter.git
+cd excel-converter
+pip install -e ".[dev]"
+```
+
+The `-e` flag installs the package in editable mode so changes to `src/` are reflected immediately without reinstalling. The `[dev]` extra includes PyInstaller for building the standalone executable.
 
 ---
 
 ## Usage
 
 ```
-python convert_excel.py <input_dir> [output_dir] [options]
+excel-converter <input_dir> [output_dir] [options]
 ```
 
 ### Arguments
@@ -54,23 +74,43 @@ python convert_excel.py <input_dir> [output_dir] [options]
 
 **Basic — convert all `.xls` files in a folder:**
 ```bash
-python convert_excel.py ./test_files
+excel-converter ./test_files
 # Output goes to: ./test_files/converted/
 ```
 
 **Custom output folder:**
 ```bash
-python convert_excel.py ./test_files ./output_xlsx
+excel-converter ./test_files ./output_xlsx
 ```
 
 **Include subdirectories (recursive):**
 ```bash
-python convert_excel.py ./test_files ./output_xlsx --recursive
+excel-converter ./test_files ./output_xlsx --recursive
 ```
 
 **Data-only mode (no Excel required):**
 ```bash
-python convert_excel.py ./test_files --no-excel
+excel-converter ./test_files --no-excel
+```
+
+---
+
+## Build (standalone executable)
+
+Produces a self-contained `excel-converter.exe` for Windows — no Python installation required on the target machine.
+
+**Prerequisites:** install the package with the `[dev]` extra (see Setup above).
+
+```bash
+python scripts/package.py
+```
+
+Output: `dist/excel-converter-v<version>-win64.zip`  
+Contents: `excel-converter.exe`, `README.md`, `README.txt`
+
+You can also run PyInstaller directly:
+```bash
+pyinstaller excel_converter.spec --clean
 ```
 
 ---
@@ -110,6 +150,37 @@ Done: 6 converted, 0 failed.
 The `[XML]` / `[HTML]` tags indicate files that were disguised as `.xls` but were actually SpreadsheetML or HTML — the fallback parser handles all three sub-formats automatically.
 
 If a file cannot be read (corrupt, locked, wrong format), it is reported individually and the rest of the batch continues. The process exits with code `1` if any file failed.
+
+---
+
+## Project structure
+
+```
+excel-converter/
+├── src/
+│   └── excel_converter/
+│       ├── __init__.py          # version, author
+│       ├── __main__.py          # python -m excel_converter support
+│       ├── cli.py               # argparse + main() entry point
+│       ├── com_mode.py          # Excel COM conversion (primary mode)
+│       ├── fallback.py          # Pure-Python fallback (data-only)
+│       └── discovery.py         # file discovery and task mapping
+├── scripts/
+│   └── package.py               # builds the standalone .exe ZIP
+├── tests/                       # test suite
+├── test_files/                  # sample .xls files for manual testing
+│   ├── ventas_2003.xls
+│   ├── empleados.xls
+│   ├── inventario_multisheet.xls
+│   └── por_region/
+│       ├── norte.xls
+│       ├── sur.xls
+│       └── internacional/
+│           └── global.xls
+├── excel_converter.spec         # PyInstaller build spec
+├── pyproject.toml
+└── README.md
+```
 
 ---
 

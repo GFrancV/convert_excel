@@ -28,16 +28,29 @@
   - pywin32 >= 306       (Windows COM automation -- Windows only)
   - Microsoft Excel installed on the machine
 
-  Install all dependencies:
 
-    pip install -r requirements.txt
+--------------------------------------------------------------------------------
+  SETUP
+--------------------------------------------------------------------------------
+
+  Install from source:
+
+    git clone https://github.com/GFrancV/excel-converter.git
+    cd excel-converter
+    pip install .
+
+  After installation the "excel-converter" command is available globally.
+
+  Developer install (editable, includes PyInstaller):
+
+    pip install -e ".[dev]"
 
 
 --------------------------------------------------------------------------------
   USAGE
 --------------------------------------------------------------------------------
 
-  python convert_excel.py <input_dir> [output_dir] [options]
+  excel-converter <input_dir> [output_dir] [options]
 
   ARGUMENTS
   ---------
@@ -65,20 +78,20 @@
 
   Basic usage -- convert all .xls files in a folder:
 
-    python convert_excel.py ./test_files
+    excel-converter ./test_files
     (Output goes to: ./test_files/converted/)
 
   Custom output folder:
 
-    python convert_excel.py ./test_files ./output_xlsx
+    excel-converter ./test_files ./output_xlsx
 
   Include subdirectories (recursive):
 
-    python convert_excel.py ./test_files ./output_xlsx --recursive
+    excel-converter ./test_files ./output_xlsx --recursive
 
   Data-only mode (no Excel required):
 
-    python convert_excel.py ./test_files --no-excel
+    excel-converter ./test_files --no-excel
 
 
 --------------------------------------------------------------------------------
