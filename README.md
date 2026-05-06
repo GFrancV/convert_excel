@@ -4,6 +4,8 @@
 
 Converts legacy Excel files (`.xls`, Excel 97-2003 format) to modern `.xlsx` format.
 
+Available as a **graphical application** (GUI) and a **command-line tool** (CLI).
+
 Two conversion modes are available:
 
 | Mode | Requires | Preserves |
@@ -12,6 +14,30 @@ Two conversion modes are available:
 | **Fallback** *(--no-excel)* | Python only | Data values only (text, numbers, dates, booleans) |
 
 The COM mode is equivalent to opening each file in Excel and using **File → Save As → xlsx**.
+
+---
+
+## GUI
+
+The graphical interface lets you select files or folders through native Windows dialogs and convert them with one click — no command line needed.
+
+**Launch:**
+
+```bash
+excel-converter-gui          # if installed via pip
+python -m excel_converter.gui  # from source
+```
+
+**Features:**
+
+- **Select files** — opens a Windows file picker; supports multiple `.xls` files at once
+- **Select folder** — opens a folder browser; optional "Include subfolders" checkbox
+- **Custom destination** — choose an output folder via Browse, or leave it blank to use the default (`<origin>/converted/`)
+- **Data-only mode** — toggle to skip Excel COM and convert without requiring Excel installed
+- **Real-time progress** — progress bar and per-file log with color-coded OK / FAIL results
+- **Cancel** — stops the conversion after the current file finishes (Excel is always cleaned up)
+
+The standalone `excel-converter-gui.exe` requires no Python installation on the target machine.
 
 ---
 
@@ -38,7 +64,9 @@ cd excel-converter
 pip install .
 ```
 
-After installation the `excel-converter` command is available globally in your environment.
+After installation two commands are available globally:
+- `excel-converter` — CLI tool
+- `excel-converter-gui` — graphical interface
 
 ### Developers — editable install
 
@@ -95,9 +123,9 @@ excel-converter ./test_files --no-excel
 
 ---
 
-## Build (standalone executable)
+## Build (standalone executables)
 
-Produces a self-contained `excel-converter.exe` for Windows — no Python installation required on the target machine.
+Produces self-contained Windows executables — no Python installation required on the target machine.
 
 **Prerequisites:** install the package with the `[dev]` extra (see Setup above).
 
@@ -106,11 +134,17 @@ python scripts/package.py
 ```
 
 Output: `dist/excel-converter-v<version>-win64.zip`  
-Contents: `excel-converter.exe`, `README.md`, `README.txt`
+Contents: `excel-converter.exe`, `excel-converter-gui.exe`, `README.md`, `README.txt`
 
-You can also run PyInstaller directly:
+| Executable | Interface | Console window |
+|---|---|---|
+| `excel-converter.exe` | CLI | Yes |
+| `excel-converter-gui.exe` | GUI | No |
+
+You can also run PyInstaller directly for either spec:
 ```bash
-pyinstaller excel_converter.spec --clean
+pyinstaller excel_converter.spec --clean      # CLI only
+pyinstaller excel_converter_gui.spec --clean  # GUI only
 ```
 
 ---
@@ -161,12 +195,13 @@ excel-converter/
 │   └── excel_converter/
 │       ├── __init__.py          # version, author
 │       ├── __main__.py          # python -m excel_converter support
-│       ├── cli.py               # argparse + main() entry point
+│       ├── cli.py               # argparse + main() entry point; run_conversion() generator
+│       ├── gui.py               # tkinter graphical interface
 │       ├── com_mode.py          # Excel COM conversion (primary mode)
 │       ├── fallback.py          # Pure-Python fallback (data-only)
 │       └── discovery.py         # file discovery and task mapping
 ├── scripts/
-│   └── package.py               # builds the standalone .exe ZIP
+│   └── package.py               # builds both standalone .exe files into a ZIP
 ├── tests/                       # test suite
 ├── test_files/                  # sample .xls files for manual testing
 │   ├── ventas_2003.xls
@@ -177,7 +212,8 @@ excel-converter/
 │       ├── sur.xls
 │       └── internacional/
 │           └── global.xls
-├── excel_converter.spec         # PyInstaller build spec
+├── excel_converter.spec         # PyInstaller spec — CLI executable
+├── excel_converter_gui.spec     # PyInstaller spec — GUI executable
 ├── pyproject.toml
 └── README.md
 ```

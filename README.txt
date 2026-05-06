@@ -4,6 +4,8 @@
 
   Converts legacy Excel files (.xls, Excel 97-2003) to modern .xlsx format.
 
+  Available as a graphical application (GUI) and a command-line tool (CLI).
+
   Two conversion modes:
 
   COM mode (default)   Requires Windows + Microsoft Excel installed.
@@ -13,6 +15,31 @@
 
   Fallback mode        Pure Python, no Excel required (--no-excel flag).
   (--no-excel)         Preserves data values only. No formatting.
+
+
+--------------------------------------------------------------------------------
+  GUI (GRAPHICAL INTERFACE)
+--------------------------------------------------------------------------------
+
+  The graphical interface lets you select files or folders through native
+  Windows dialogs and convert them with one click -- no command line needed.
+
+  Launch:
+
+    excel-converter-gui               (if installed via pip)
+    python -m excel_converter.gui     (from source)
+
+  Features:
+
+  - Select files    Opens a Windows file picker; supports multiple .xls files.
+  - Select folder   Opens a folder browser with optional "Include subfolders".
+  - Destination     Choose an output folder via Browse, or leave blank to use
+                    the default (<origin>/converted/).
+  - Data-only mode  Toggle to convert without requiring Excel installed.
+  - Live progress   Progress bar and per-file log with color-coded OK/FAIL.
+  - Cancel          Stops after the current file; Excel is always cleaned up.
+
+  The standalone excel-converter-gui.exe requires no Python on the target machine.
 
 
 --------------------------------------------------------------------------------
@@ -39,7 +66,9 @@
     cd excel-converter
     pip install .
 
-  After installation the "excel-converter" command is available globally.
+  After installation two commands are available globally:
+    excel-converter       CLI tool
+    excel-converter-gui   Graphical interface
 
   Developer install (editable, includes PyInstaller):
 
@@ -131,6 +160,31 @@
 
   If a file is corrupt or unreadable it is reported individually while the rest
   continues. Exit code is 1 if any file failed.
+
+
+--------------------------------------------------------------------------------
+  BUILD (STANDALONE EXECUTABLES)
+--------------------------------------------------------------------------------
+
+  Produces self-contained Windows executables -- no Python required on target.
+
+  Prerequisites: pip install -e ".[dev]"
+
+  Build both executables:
+
+    python scripts/package.py
+
+  Output: dist/excel-converter-v<version>-win64.zip
+  Contents:
+    excel-converter.exe       CLI  (with console window)
+    excel-converter-gui.exe   GUI  (no console window)
+    README.md
+    README.txt
+
+  Build individually:
+
+    pyinstaller excel_converter.spec --clean       (CLI only)
+    pyinstaller excel_converter_gui.spec --clean   (GUI only)
 
 
 --------------------------------------------------------------------------------
