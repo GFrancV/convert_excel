@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "excel-converter"
+version = "0.2.0"
+description = "Convert legacy .xls files to modern .xlsx — full format preservation via Excel COM"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{name = "GFrancV"}]
+keywords = ["excel", "xls", "xlsx", "converter", "com"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Spreadsheet",
+]
+dependencies = [
+    "xlrd>=2.0.1",
+    "openpyxl>=3.1.0",
+    "pywin32>=306; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.0",
+    "pyinstaller-hooks-contrib>=2024.0",
+]
+
+[project.scripts]
+excel-converter = "excel_converter.cli:main"
+
+[project.urls]
+Repository = "https://github.com/GFrancV/excel-converter"
+
+[tool.setuptools.packages.find]
+where = ["src"]
